@@ -1,0 +1,355 @@
+# Schematic SDK Integration Rules
+
+You are an expert at integrating with Schematic, a feature and entitlement management platform. When the user asks about feature flags, entitlements, usage tracking, identify events, webhook verification, checkout, pricing tables, or billing UI, follow these rules.
+
+## What is Schematic?
+
+Schematic is a feature and entitlement management platform. Key concepts:
+
+- **Features**: Product capabilities gated by flags (boolean on/off)
+- **Entitlements**: What a company/user has access to, based on their plan
+- **Plans**: Bundles of feature entitlements and usage limits
+- **Flags**: Runtime checks that evaluate entitlement rules
+- **Identify events**: Upsert user/company context for targeting
+- **Track events**: Record usage for metered entitlements (e.g., API calls, seats)
+
+## General Rules
+
+- Always use environment variables for API keys — never hardcode secrets
+- Always close/shutdown the Schematic client when done — it runs background event buffers
+- Show examples only for the language/framework the user is working in
+- Company and user keys should be stable IDs from the user's database
+- Track events are non-blocking and buffered (sent in batches every ~5s)
+- Flag checks are cached by default (5s TTL)
+
+---
+
+## Backend SDKs
+
+### Installation
+
+- **Node/TypeScript:** `npm install @schematichq/schematic-typescript-node`
+- **Python:** `pip install schematichq`
+- **Go:** `go get github.com/schematichq/schematic-go`
+- **Java (Gradle):** `implementation 'com.schematichq:schematic-java:+'`
+- **C# (.NET):** `dotnet add package SchematicHQ.Client`
+
+### Client Initialization
+
+**Node/TypeScript:**
+```typescript
+import { SchematicClient } from "@schematichq/schematic-typescript-node";
+const schematic = new SchematicClient({ apiKey: process.env.SCHEMATIC_API_KEY });
+// Cleanup: await schematic.close()
+```
+
+**Python (sync):**
+```python
+from schematic.client import Schematic
+client = Schematic(os.environ["SCHEMATIC_API_KEY"])
+# Cleanup: client.shutdown()
+```
+
+**Python (async):**
+```python
+from schematic.client import AsyncSchematic
+async with AsyncSchematic(os.environ["SCHEMATIC_API_KEY"]) as client:
+    pass  # auto cleanup
+```
+
+**Go:**
+```go
+import (
+    "github.com/schematichq/schematic-go/client"
+    "github.com/schematichq/schematic-go/option"
+)
+schematicClient := client.NewSchematicClient(option.WithAPIKey(os.Getenv("SCHEMATIC_API_KEY")))
+defer schematicClient.Close()
+```
+
+**Java:**
+```java
+import com.schematic.api.Schematic;
+try (Schematic schematic = Schematic.builder().apiKey(System.getenv("SCHEMATIC_API_KEY")).build()) {
+    // auto-closed
+}
+```
+
+**C#:**
+```csharp
+using SchematicHQ;
+var schematic = new Schematic(Environment.GetEnvironmentVariable("SCHEMATIC_API_KEY"));
+// Cleanup: await schematic.Shutdown()
+```
+
+### Check Feature Flags
+
+**Node:** `const isEnabled = await schematic.checkFlag({ company: { id: "co-id" }, user: { id: "user-id" } }, "flag-key");`
+
+**Python:** `is_enabled = client.check_flag(flag_key="flag-key", company={"id": "co-id"}, user={"id": "user-id"})`
+
+**Go:** `isEnabled := schematicClient.CheckFlag(ctx, "flag-key", map[string]string{"id": "co-id"}, map[string]string{"id": "user-id"})`
+
+**Java:** `boolean isEnabled = schematic.checkFlag("flag-key", Map.of("id", "co-id"), Map.of("id", "user-id"));`
+
+**C#:** `bool isEnabled = await schematic.CheckFlag("flag-key", new() { { "id", "co-id" } }, new() { { "id", "user-id" } });`
+
+### Identify Events
+
+Upsert user/company context. Call on login or profile changes.
+
+**Node:**
+```typescript
+await schematic.identify({
+  keys: { id: "user-db-id" },
+  name: "Jane Doe",
+  traits: { email: "jane@example.com" },
+  company: { keys: { id: "company-db-id" }, name: "Acme Corp", traits: { plan: "enterprise" } },
+});
+```
+
+**Python:**
+```python
+client.identify(
+    keys={"id": "user-db-id"}, name="Jane Doe",
+    traits={"email": "jane@example.com"},
+    company={"keys": {"id": "company-db-id"}, "name": "Acme Corp", "traits": {"plan": "enterprise"}},
+)
+```
+
+**Go:**
+```go
+schematicClient.Identify(ctx, &schematicgo.EventBodyIdentify{
+    Keys: map[string]string{"id": "user-db-id"},
+    Name: schematicgo.String("Jane Doe"),
+    Traits: map[string]any{"email": "jane@example.com"},
+    Company: &schematicgo.EventBodyIdentifyCompany{
+        Keys: map[string]string{"id": "company-db-id"}, Name: schematicgo.String("Acme Corp"),
+    },
+})
+```
+
+### Track Events
+
+Record usage for metered entitlements. Include `quantity` for metered features.
+
+**Node:** `await schematic.track({ event: "api-call", company: { id: "co-id" }, user: { id: "user-id" }, quantity: 1 });`
+
+**Python:** `client.track(event="api-call", company={"id": "co-id"}, user={"id": "user-id"}, quantity=1)`
+
+**Go:** `schematicClient.Track(ctx, &schematicgo.EventBodyTrack{ Event: "api-call", Company: map[string]string{"id": "co-id"}, Quantity: schematicgo.Int(1) })`
+
+### Webhook Verification
+
+Schematic signs webhooks with HMAC-SHA256. Always verify signatures.
+
+**Node (Express):**
+```typescript
+import { verifyWebhookSignature } from "@schematichq/schematic-typescript-node";
+app.post("/webhooks/schematic", express.raw({ type: "application/json" }), (req, res) => {
+  try {
+    verifyWebhookSignature(req, process.env.SCHEMATIC_WEBHOOK_SECRET, req.body);
+    res.sendStatus(200);
+  } catch { res.sendStatus(400); }
+});
+```
+
+**Python (Flask):**
+```python
+from schematic.webhook import verify_webhook_signature
+@app.route("/webhooks/schematic", methods=["POST"])
+def handle_webhook():
+    verify_webhook_signature(request, os.environ["SCHEMATIC_WEBHOOK_SECRET"])
+    return "", 200
+```
+
+**Go:**
+```go
+import "github.com/schematichq/schematic-go/webhooks"
+err := webhooks.VerifyWebhookSignature(r, os.Getenv("SCHEMATIC_WEBHOOK_SECRET"))
+```
+
+### Advanced Configuration
+
+**Flag Defaults (fallback):**
+- Node: `{ flagDefaults: { "my-flag": true } }`
+- Python: `SchematicConfig(flag_defaults={"my-flag": True})`
+- Go: `option.WithDefaultFlagValues(map[string]bool{"my-flag": true})`
+
+**Offline Mode:**
+- Node: `{ offline: true }`
+- Python: `SchematicConfig(offline=True)`
+- Go: `option.WithOfflineMode()`
+
+**Disable Cache:**
+- Node: `{ cacheProviders: { flagChecks: [] } }`
+- Python: `SchematicConfig(cache_providers=[])`
+- Go: `option.WithDisabledFlagCheckCache()`
+
+---
+
+## Frontend SDKs
+
+Frontend SDKs use a **publishable key** (not secret API key) and are safe for client-side code.
+
+### Installation
+
+- **React:** `npm install @schematichq/schematic-react`
+- **Vue:** `npm install @schematichq/schematic-vue`
+- **Plain JS:** `npm install @schematichq/schematic-js`
+
+### Setup
+
+**React:**
+```tsx
+import { SchematicProvider } from "@schematichq/schematic-react";
+<SchematicProvider publishableKey={process.env.NEXT_PUBLIC_SCHEMATIC_PUBLISHABLE_KEY}>
+  <App />
+</SchematicProvider>
+```
+
+**Vue:**
+```typescript
+import { SchematicPlugin } from "@schematichq/schematic-vue";
+app.use(SchematicPlugin, { publishableKey: import.meta.env.VITE_SCHEMATIC_PUBLISHABLE_KEY });
+```
+
+**Plain JS:**
+```typescript
+import { Schematic } from "@schematichq/schematic-js";
+const schematic = new Schematic("your-publishable-key");
+// Cleanup: await schematic.cleanup()
+```
+
+### Identify Users
+
+Call after login. Sets context for all subsequent flag checks.
+
+**React:**
+```tsx
+const { identify } = useSchematicEvents();
+identify({ keys: { id: user.id }, traits: { email: user.email }, company: { keys: { id: user.companyId } } });
+```
+
+**Vue:**
+```typescript
+const { identify } = useSchematicEvents();
+identify({ keys: { id: user.id }, company: { keys: { id: user.companyId } } });
+```
+
+### Check Flags
+
+**React:**
+```tsx
+import { useSchematicFlag } from "@schematichq/schematic-react";
+const isEnabled = useSchematicFlag("feature-flag-key");
+```
+
+**React (entitlement with usage):**
+```tsx
+import { useSchematicEntitlement } from "@schematichq/schematic-react";
+const { isEntitled, usage, limit } = useSchematicEntitlement("api-calls");
+```
+
+**Vue:**
+```vue
+<script setup>
+import { useSchematicFlag } from "@schematichq/schematic-vue";
+const isEnabled = useSchematicFlag("feature-flag-key");
+</script>
+<template><NewFeature v-if="isEnabled" /></template>
+```
+
+### Track Events
+
+**React:**
+```tsx
+const { track } = useSchematicEvents();
+track({ event: "api-call", quantity: 1 });
+```
+
+**Vue:**
+```typescript
+const { track } = useSchematicEvents();
+track({ event: "api-call", quantity: 1 });
+```
+
+### Available Hooks/Composables
+
+| Hook / Composable | Returns | Description |
+|---|---|---|
+| `useSchematicFlag(key)` | `boolean` / `Ref<boolean>` | Check a single flag |
+| `useSchematicEntitlement(key)` | `{ isEntitled, usage, limit }` | Check entitlement with usage |
+| `useSchematicEvents()` | `{ identify, track }` | Send identify/track events |
+| `useSchematicIsPending()` | `boolean` / `Ref<boolean>` | True while initial data loads |
+| `useSchematicContext()` | `{ context, setContext }` | Read/update evaluation context |
+| `useSchematic()` | `{ client }` | Access the raw Schematic client |
+
+### WebSocket Mode
+
+For real-time flag updates: `<SchematicProvider publishableKey={key} useWebSocket={true}>`
+
+### Frontend Gotchas
+
+- Use **publishable key**, not secret API key
+- Call `identify` before checking flags — flags evaluate against identified context
+- Vue composables return `Ref<T>` — auto-unwrapped in templates
+- Events are buffered, not sent immediately
+- Flag checks return defaults during SSR; hydration picks up real values
+
+---
+
+## Embedded Billing Components
+
+Pre-built React components for checkout, pricing tables, and customer portals.
+
+### Installation
+
+```bash
+npm install @schematichq/schematic-components @stripe/stripe-js
+```
+
+### Token Exchange Pattern
+
+Your backend issues a temporary access token, your frontend uses it to render the component:
+
+**Backend (Node):**
+```typescript
+const response = await schematic.accesstokens.issueTemporaryAccessToken({
+  lookup: { companyId: req.user.companyId },
+});
+res.json({ token: response.data.token });
+```
+
+**Frontend:**
+```tsx
+import { SchematicEmbed } from "@schematichq/schematic-components";
+
+function BillingPage() {
+  const [token, setToken] = useState(null);
+  useEffect(() => {
+    fetch("/schematic-token").then(r => r.json()).then(d => setToken(d.token));
+  }, []);
+  if (!token) return <div>Loading...</div>;
+  return <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />;
+}
+```
+
+### EmbedProvider for Multiple Components
+
+```tsx
+import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
+
+<EmbedProvider accessToken={token}>
+  <SchematicEmbed id="cmpn_PRICING_TABLE" />
+  <SchematicEmbed id="cmpn_CUSTOMER_PORTAL" />
+</EmbedProvider>
+```
+
+### Components Gotchas
+
+- Temporary tokens are short-lived — fetch a new one each mount
+- Component IDs come from the Schematic dashboard (start with `cmpn_`)
+- `@stripe/stripe-js` peer dependency is required
+- Components are React-only — no Vue equivalent
+- The `lookup` object scopes the token to a specific company
