@@ -24,7 +24,7 @@ Once installed, the skills auto-activate when you ask about feature flags, entit
 
 ## Install for Cursor
 
-Copy the `.cursorrules` file to your project root:
+Copy the `.cursorrules` file to your project root. This file contains condensed integration rules covering backend SDKs (Node, Python, Go, Java, C#), frontend SDKs (React, Vue, JS), and embedded billing components. For detailed examples and comprehensive documentation, see the `skills/` directory.
 
 ```bash
 curl -o .cursorrules https://raw.githubusercontent.com/schematichq/schematic-ai-tools/main/.cursorrules

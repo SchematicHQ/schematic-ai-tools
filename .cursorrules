@@ -1,5 +1,11 @@
 # Schematic SDK Integration Rules
 
+<!-- 
+  This file is a condensed reference for Cursor. For detailed examples and 
+  comprehensive documentation, see the SKILL.md files in the skills/ directory.
+  This file should be kept in sync with those files for consistency.
+-->
+
 You are an expert at integrating with Schematic, a feature and entitlement management platform. When the user asks about feature flags, entitlements, usage tracking, identify events, webhook verification, checkout, pricing tables, or billing UI, follow these rules.
 
 ## What is Schematic?
@@ -129,6 +135,34 @@ schematicClient.Identify(ctx, &schematicgo.EventBodyIdentify{
 })
 ```
 
+**Java:**
+```java
+schematic.identify(
+    Map.of("id", "user-db-id"),
+    EventBodyIdentifyCompany.builder()
+        .keys(Map.of("id", "company-db-id"))
+        .name("Acme Corp")
+        .traits(Map.of("plan", "enterprise"))
+        .build(),
+    "Jane Doe",
+    Map.of("email", "jane@example.com", "role", "admin")
+);
+```
+
+**C#:**
+```csharp
+schematic.Identify(
+    keys: new Dictionary<string, string> { { "id", "user-db-id" } },
+    company: new EventBodyIdentifyCompany {
+        Keys = new Dictionary<string, string> { { "id", "company-db-id" } },
+        Name = "Acme Corp",
+        Traits = new Dictionary<string, object> { { "plan", "enterprise" } },
+    },
+    name: "Jane Doe",
+    traits: new Dictionary<string, object> { { "email", "jane@example.com" } }
+);
+```
+
 ### Track Events
 
 Record usage for metered entitlements. Include `quantity` for metered features.
@@ -137,7 +171,11 @@ Record usage for metered entitlements. Include `quantity` for metered features.
 
 **Python:** `client.track(event="api-call", company={"id": "co-id"}, user={"id": "user-id"}, quantity=1)`
 
-**Go:** `schematicClient.Track(ctx, &schematicgo.EventBodyTrack{ Event: "api-call", Company: map[string]string{"id": "co-id"}, Quantity: schematicgo.Int(1) })`
+**Go:** `schematicClient.Track(ctx, &schematicgo.EventBodyTrack{ Event: "api-call", Company: map[string]string{"id": "co-id"}, User: map[string]string{"id": "user-id"}, Quantity: schematicgo.Int(1) })`
+
+**Java:** `schematic.track("api-call", Map.of("id", "co-id"), Map.of("id", "user-id"), null, 1);`
+
+**C#:** `schematic.Track(eventName: "api-call", company: new Dictionary<string, string> { { "id", "co-id" } }, user: new Dictionary<string, string> { { "id", "user-id" } }, quantity: 1);`
 
 ### Webhook Verification
 
@@ -159,32 +197,87 @@ app.post("/webhooks/schematic", express.raw({ type: "application/json" }), (req,
 from schematic.webhook import verify_webhook_signature
 @app.route("/webhooks/schematic", methods=["POST"])
 def handle_webhook():
-    verify_webhook_signature(request, os.environ["SCHEMATIC_WEBHOOK_SECRET"])
-    return "", 200
+    try:
+        verify_webhook_signature(request, os.environ["SCHEMATIC_WEBHOOK_SECRET"])
+        return "", 200
+    except Exception:
+        return "", 400
 ```
 
 **Go:**
 ```go
 import "github.com/schematichq/schematic-go/webhooks"
-err := webhooks.VerifyWebhookSignature(r, os.Getenv("SCHEMATIC_WEBHOOK_SECRET"))
+func handleWebhook(w http.ResponseWriter, r *http.Request) {
+    err := webhooks.VerifyWebhookSignature(r, os.Getenv("SCHEMATIC_WEBHOOK_SECRET"))
+    if err != nil {
+        http.Error(w, "Invalid signature", http.StatusBadRequest)
+        return
+    }
+    w.WriteHeader(http.StatusOK)
+}
+```
+
+**Java (Spring):**
+```java
+import com.schematic.webhook.WebhookVerifier;
+import com.schematic.webhook.WebhookSignatureException;
+
+@PostMapping("/webhooks/schematic")
+public ResponseEntity<Void> handleWebhook(@RequestBody String body, @RequestHeader Map<String, String> headers) {
+    try {
+        WebhookVerifier.verifyWebhookSignature(body, headers, System.getenv("SCHEMATIC_WEBHOOK_SECRET"));
+        return ResponseEntity.ok().build();
+    } catch (WebhookSignatureException e) {
+        return ResponseEntity.badRequest().build();
+    }
+}
+```
+
+**C#:**
+```csharp
+using SchematicHQ.Client.Webhooks;
+
+[HttpPost("webhooks/schematic")]
+public IActionResult HandleWebhook([FromBody] string body, [FromHeader] Dictionary<string, string> headers) {
+    try {
+        WebhookVerifier.VerifyWebhookSignature(body, headers, Environment.GetEnvironmentVariable("SCHEMATIC_WEBHOOK_SECRET"));
+        return Ok();
+    } catch (WebhookSignatureException) {
+        return BadRequest();
+    }
+}
 ```
 
 ### Advanced Configuration
 
-**Flag Defaults (fallback):**
+**Flag Defaults (fallback when API is unreachable):**
 - Node: `{ flagDefaults: { "my-flag": true } }`
 - Python: `SchematicConfig(flag_defaults={"my-flag": True})`
 - Go: `option.WithDefaultFlagValues(map[string]bool{"my-flag": true})`
+- Java: `Schematic.builder().apiKey(key).flagDefaults(Map.of("my-flag", true)).build()`
+- C#: `new Schematic(key, new ClientOptions { FlagDefaults = new() { { "my-flag", true } } })`
 
-**Offline Mode:**
+**Offline Mode (no network calls, uses defaults):**
 - Node: `{ offline: true }`
 - Python: `SchematicConfig(offline=True)`
 - Go: `option.WithOfflineMode()`
+- Java: `Schematic.builder().apiKey(key).offline(true).build()`
+- C#: `new Schematic(key, new ClientOptions { Offline = true })`
 
 **Disable Cache:**
 - Node: `{ cacheProviders: { flagChecks: [] } }`
 - Python: `SchematicConfig(cache_providers=[])`
 - Go: `option.WithDisabledFlagCheckCache()`
+- Java: `Schematic.builder().apiKey(key).cacheProviders(List.of()).build()`
+- C#: `new Schematic(key, new ClientOptions { CacheProviders = new() })`
+
+**Backend Gotchas:**
+1. **Always close/shutdown the client** — it runs background event buffers that need cleanup
+2. **Use environment variables** for API keys — never hardcode secrets
+3. **Company and user keys** are how Schematic identifies entities — use stable IDs from your database
+4. **Track events are non-blocking** — they're buffered and sent in batches (default every 5s)
+5. **Flag checks are cached** by default (5s TTL) — disable cache for real-time needs
+6. **Webhook secrets** are different from API keys — find them in Schematic dashboard under Webhooks
 
 ---
 
@@ -237,12 +330,18 @@ const { identify } = useSchematicEvents();
 identify({ keys: { id: user.id }, company: { keys: { id: user.companyId } } });
 ```
 
+**Plain JS:**
+```typescript
+schematic.identify({ keys: { id: "user-id" }, traits: { email: "jane@example.com" }, company: { keys: { id: "company-id" } } });
+```
+
 ### Check Flags
 
 **React:**
 ```tsx
 import { useSchematicFlag } from "@schematichq/schematic-react";
 const isEnabled = useSchematicFlag("feature-flag-key");
+// With fallback: useSchematicFlag("feature-flag-key", { fallback: false })
 ```
 
 **React (entitlement with usage):**
@@ -260,6 +359,19 @@ const isEnabled = useSchematicFlag("feature-flag-key");
 <template><NewFeature v-if="isEnabled" /></template>
 ```
 
+**Vue (entitlement):**
+```vue
+<script setup>
+import { useSchematicEntitlement } from "@schematichq/schematic-vue";
+const { isEntitled, usage, limit } = useSchematicEntitlement("api-calls");
+</script>
+```
+
+**Plain JS:**
+```typescript
+const isEnabled = await schematic.checkFlag({ key: "feature-flag-key" });
+```
+
 ### Track Events
 
 **React:**
@@ -274,28 +386,80 @@ const { track } = useSchematicEvents();
 track({ event: "api-call", quantity: 1 });
 ```
 
+**Plain JS:**
+```typescript
+schematic.track({ event: "api-call", quantity: 1 });
+```
+
+### Loading States
+
+**React:**
+```tsx
+import { useSchematicIsPending } from "@schematichq/schematic-react";
+const isPending = useSchematicIsPending();
+if (isPending) return <Spinner />;
+```
+
+**Vue:**
+```vue
+<script setup>
+import { useSchematicIsPending } from "@schematichq/schematic-vue";
+const isPending = useSchematicIsPending();
+</script>
+<template>
+  <Spinner v-if="isPending" />
+  <MainContent v-else />
+</template>
+```
+
+### WebSocket Mode
+
+For real-time flag updates without polling. React and Vue enable WebSocket by default. Plain JS requires explicit enable:
+
+**React:** `<SchematicProvider publishableKey={key} useWebSocket={true}>`
+
+**Vue:** `app.use(SchematicPlugin, { publishableKey: key, useWebSocket: true });`
+
+**Plain JS:** `new Schematic("key", { useWebSocket: true })`
+
+WebSocket mode maintains a persistent connection, pushes flag changes instantly, and auto-reconnects with exponential backoff.
+
+### Advanced Options
+
+**Debug Mode** (logs flag evaluations and events):
+- React: `<SchematicProvider publishableKey={key} debug={true}>`
+- Vue: `app.use(SchematicPlugin, { publishableKey: key, debug: true });`
+- JS: `new Schematic("key", { debug: true })`
+
+**Offline Mode** (disables network requests, uses flag defaults):
+- React: `<SchematicProvider publishableKey={key} offline={true}>`
+- Vue: `app.use(SchematicPlugin, { publishableKey: key, offline: true });`
+- JS: `new Schematic("key", { offline: true })`
+
+**Flag Value Defaults** (fallback when API is unreachable):
+- React: `<SchematicProvider publishableKey={key} flagValueDefaults={{ "my-flag": true }}>`
+- Vue: `app.use(SchematicPlugin, { publishableKey: key, flagValueDefaults: { "my-flag": true } });`
+- JS: `new Schematic("key", { flagValueDefaults: { "my-flag": true } })`
+
 ### Available Hooks/Composables
 
 | Hook / Composable | Returns | Description |
 |---|---|---|
-| `useSchematicFlag(key)` | `boolean` / `Ref<boolean>` | Check a single flag |
+| `useSchematicFlag(key)` | `boolean` (React) / `Ref<boolean>` (Vue) | Check a single flag |
 | `useSchematicEntitlement(key)` | `{ isEntitled, usage, limit }` | Check entitlement with usage |
 | `useSchematicEvents()` | `{ identify, track }` | Send identify/track events |
 | `useSchematicIsPending()` | `boolean` / `Ref<boolean>` | True while initial data loads |
 | `useSchematicContext()` | `{ context, setContext }` | Read/update evaluation context |
 | `useSchematic()` | `{ client }` | Access the raw Schematic client |
 
-### WebSocket Mode
-
-For real-time flag updates: `<SchematicProvider publishableKey={key} useWebSocket={true}>`
-
 ### Frontend Gotchas
 
-- Use **publishable key**, not secret API key
-- Call `identify` before checking flags — flags evaluate against identified context
-- Vue composables return `Ref<T>` — auto-unwrapped in templates
-- Events are buffered, not sent immediately
-- Flag checks return defaults during SSR; hydration picks up real values
+1. **Use publishable key** — not the secret API key. Publishable keys are safe for client-side code
+2. **Call identify before checking flags** — flags evaluate against the identified user/company context
+3. **Always clean up** — call `cleanup()` (JS) or let the provider handle it (React/Vue)
+4. **Vue refs auto-unwrap in templates** — `useSchematicFlag` returns a `Ref<boolean>`, but Vue templates unwrap it automatically
+5. **Events are buffered** — track events are queued and sent in batches, not immediately
+6. **SSR considerations** — flag checks return defaults during server rendering; hydration picks up real values client-side
 
 ---
 
@@ -309,9 +473,11 @@ Pre-built React components for checkout, pricing tables, and customer portals.
 npm install @schematichq/schematic-components @stripe/stripe-js
 ```
 
+`@stripe/stripe-js` is a required peer dependency for payment processing.
+
 ### Token Exchange Pattern
 
-Your backend issues a temporary access token, your frontend uses it to render the component:
+Your backend issues a temporary access token, your frontend uses it to render the component. This keeps your API key server-side while letting the component interact with Schematic's API.
 
 **Backend (Node):**
 ```typescript
@@ -319,6 +485,24 @@ const response = await schematic.accesstokens.issueTemporaryAccessToken({
   lookup: { companyId: req.user.companyId },
 });
 res.json({ token: response.data.token });
+```
+
+**Backend (Python):**
+```python
+response = client.accesstokens.issue_temporary_access_token(
+    lookup={"company_id": request.user.company_id},
+)
+return {"token": response.data.token}
+```
+
+**Backend (Go):**
+```go
+resp, err := schematicClient.API().Accesstokens.IssueTemporaryAccessToken(ctx,
+    &schematicgo.IssueTemporaryAccessTokenRequestBody{
+        Lookup: map[string]string{"company_id": companyID},
+    },
+)
+token := resp.Data.Token
 ```
 
 **Frontend:**
@@ -346,10 +530,70 @@ import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components
 </EmbedProvider>
 ```
 
+### Component Types
+
+Components are configured in the Schematic dashboard. Common types:
+
+| Type | Description |
+|---|---|
+| **checkout** | Full checkout flow with plan selection and payment |
+| **portal** | Customer portal for managing subscriptions |
+| **payment** | Payment method management |
+| **unsubscribe** | Cancellation flow |
+
+### Custom API Configuration
+
+If using a custom Schematic API endpoint (e.g., proxying through your backend):
+
+```tsx
+<SchematicEmbed
+  accessToken={token}
+  id="cmpn_YOUR_COMPONENT_ID"
+  apiConfig={{ basePath: "https://your-api-proxy.com" }}
+/>
+```
+
+### Full Example: Billing Page
+
+```tsx
+import { SchematicEmbed } from "@schematichq/schematic-components";
+import { useEffect, useState } from "react";
+
+export function BillingPage() {
+  const [token, setToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchToken() {
+      try {
+        const res = await fetch("/api/schematic-token", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch token");
+        const data = await res.json();
+        setToken(data.token);
+      } catch (err) {
+        setError("Unable to load billing. Please try again.");
+      }
+    }
+    fetchToken();
+  }, []);
+
+  if (error) return <div>{error}</div>;
+  if (!token) return <div>Loading billing...</div>;
+
+  return (
+    <div>
+      <h1>Billing</h1>
+      <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />
+    </div>
+  );
+}
+```
+
 ### Components Gotchas
 
-- Temporary tokens are short-lived — fetch a new one each mount
-- Component IDs come from the Schematic dashboard (start with `cmpn_`)
-- `@stripe/stripe-js` peer dependency is required
-- Components are React-only — no Vue equivalent
-- The `lookup` object scopes the token to a specific company
+1. **Temporary tokens are short-lived** — fetch a new one each time the component mounts; don't cache them long-term
+2. **Component IDs come from the Schematic dashboard** — they start with `cmpn_` and reference a pre-configured component
+3. **Stripe peer dependency is required** — `@stripe/stripe-js` must be installed even if you don't use Stripe directly
+4. **Token exchange keeps your API key secret** — never expose your Schematic secret API key in frontend code
+5. **Components are React-only** — there is no Vue equivalent; for Vue apps, embed in an iframe or use a React micro-frontend
+6. **The `lookup` object in token generation** identifies which company the token is scoped to — use the same keys you use in identify events

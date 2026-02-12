@@ -10,6 +10,8 @@ Schematic Components are pre-built React UI components for billing and subscript
 
 **Key pattern**: Your backend generates a temporary access token, your frontend uses it to render the component. This keeps your API key server-side while letting the component interact with Schematic's API.
 
+For more information on creating and configuring components in the Schematic dashboard, see the [Components Overview documentation](https://docs.schematichq.com/components/overview).
+
 ## Installation
 
 ```bash
@@ -21,15 +23,15 @@ npm install @schematichq/schematic-components @stripe/stripe-js
 ## Architecture: Token Exchange
 
 ```
-┌─────────────┐         ┌─────────────┐         ┌──────────┐
+┌──────────────┐        ┌──────────────┐        ┌───────────┐
 │   Frontend   │──(1)──▶│   Backend    │──(2)──▶│ Schematic │
-│  (React app) │         │  (your API)  │         │   API     │
-│              │◀──(3)──│              │◀──(3)──│           │
-│              │         └─────────────┘         └──────────┘
+│  (React app) │        │  (your API)  │        │   API     │
+│              │◀──(4)──│              │◀──(3)──│           │
+│              │        └──────────────┘        └───────────┘
 │  Renders     │
 │  SchematicEmbed
 │  with token  │
-└─────────────┘
+└──────────────┘
 ```
 
 1. Frontend requests a temporary token from your backend
@@ -155,7 +157,7 @@ interface EmbedProviderProps {
 
 ## Component Types
 
-Components are configured in the Schematic dashboard. The type is determined by the component configuration, not by props. Common types:
+Components are configured in the Schematic dashboard. The type is determined by the component configuration, not by props. See the [Components Overview](https://docs.schematichq.com/components/overview) for details on creating and customizing components. Common types:
 
 | Type | Description |
 |---|---|

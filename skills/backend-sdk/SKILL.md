@@ -167,15 +167,21 @@ bool isEnabled = await schematic.CheckFlag(
 
 ## Identify Events
 
-Identify upserts user and company context. Use this when users log in or profile data changes.
+Identify upserts user and company context. **Note:** Identify events are most commonly used from the frontend SDK. On the backend, they can be useful in contexts where there isn't a frontend session (e.g., AI agents, background jobs, or server-side user context updates).
+
+**Important:** Before using `identify`, you must configure how users and companies are identified in Schematic. See [Key Management](https://docs.schematichq.com/developer_resources/key_management) for details on setting up user and company keys.
+
+**Ask the user:** What keys have you configured in Schematic for identifying users and companies? (e.g., `app_id`, `internal_id`, `stripe_customer_id`, etc.)
 
 **Node/TypeScript:**
 ```typescript
 await schematic.identify({
+  // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
   keys: { id: "user-db-id" },
   name: "Jane Doe",
   traits: { email: "jane@example.com", role: "admin" },
   company: {
+    // Use the keys you configured in Schematic for companies
     keys: { id: "company-db-id" },
     name: "Acme Corp",
     traits: { plan: "enterprise", industry: "saas" },
@@ -186,10 +192,12 @@ await schematic.identify({
 **Python:**
 ```python
 client.identify(
+    # Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     keys={"id": "user-db-id"},
     name="Jane Doe",
     traits={"email": "jane@example.com", "role": "admin"},
     company={
+        # Use the keys you configured in Schematic for companies
         "keys": {"id": "company-db-id"},
         "name": "Acme Corp",
         "traits": {"plan": "enterprise", "industry": "saas"},
@@ -200,10 +208,12 @@ client.identify(
 **Go:**
 ```go
 schematicClient.Identify(ctx, &schematicgo.EventBodyIdentify{
+    // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     Keys:  map[string]string{"id": "user-db-id"},
     Name:  schematicgo.String("Jane Doe"),
     Traits: map[string]any{"email": "jane@example.com", "role": "admin"},
     Company: &schematicgo.EventBodyIdentifyCompany{
+        // Use the keys you configured in Schematic for companies
         Keys:   map[string]string{"id": "company-db-id"},
         Name:   schematicgo.String("Acme Corp"),
         Traits: map[string]any{"plan": "enterprise"},
@@ -214,8 +224,10 @@ schematicClient.Identify(ctx, &schematicgo.EventBodyIdentify{
 **Java:**
 ```java
 schematic.identify(
+    // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     Map.of("id", "user-db-id"),
     EventBodyIdentifyCompany.builder()
+        // Use the keys you configured in Schematic for companies
         .keys(Map.of("id", "company-db-id"))
         .name("Acme Corp")
         .traits(Map.of("plan", "enterprise"))
@@ -228,8 +240,10 @@ schematic.identify(
 **C#:**
 ```csharp
 schematic.Identify(
+    // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     keys: new Dictionary<string, string> { { "id", "user-db-id" } },
     company: new EventBodyIdentifyCompany {
+        // Use the keys you configured in Schematic for companies
         Keys = new Dictionary<string, string> { { "id", "company-db-id" } },
         Name = "Acme Corp",
         Traits = new Dictionary<string, object> { { "plan", "enterprise" } },
@@ -243,10 +257,13 @@ schematic.Identify(
 
 Track records usage for metered entitlements. Include `quantity` for metered features.
 
+**Important:** Use the same keys you configured in Schematic for identifying companies and users. See [Key Management](https://docs.schematichq.com/developer_resources/key_management) for details.
+
 **Node/TypeScript:**
 ```typescript
 await schematic.track({
   event: "api-call",
+  // Use the keys you configured in Schematic for companies/users
   company: { id: "company-id" },
   user: { id: "user-id" },
   quantity: 1,
@@ -257,6 +274,7 @@ await schematic.track({
 ```python
 client.track(
     event="api-call",
+    # Use the keys you configured in Schematic for companies/users
     company={"id": "company-id"},
     user={"id": "user-id"},
     quantity=1,
@@ -266,7 +284,8 @@ client.track(
 **Go:**
 ```go
 schematicClient.Track(ctx, &schematicgo.EventBodyTrack{
-    Event:   "api-call",
+    Event: "api-call",
+    // Use the keys you configured in Schematic for companies/users
     Company: map[string]string{"id": "company-id"},
     User:    map[string]string{"id": "user-id"},
     Quantity: schematicgo.Int(1),
@@ -276,6 +295,7 @@ schematicClient.Track(ctx, &schematicgo.EventBodyTrack{
 **Java:**
 ```java
 schematic.track("api-call",
+    // Use the keys you configured in Schematic for companies/users
     Map.of("id", "company-id"),
     Map.of("id", "user-id"),
     null,  // traits
@@ -287,6 +307,7 @@ schematic.track("api-call",
 ```csharp
 schematic.Track(
     eventName: "api-call",
+    // Use the keys you configured in Schematic for companies/users
     company: new Dictionary<string, string> { { "id", "company-id" } },
     user: new Dictionary<string, string> { { "id", "user-id" } },
     quantity: 1
@@ -410,5 +431,4 @@ All SDKs use a local in-memory cache (1000 items, 5s TTL) by default. To disable
 2. **Use environment variables** for API keys — never hardcode secrets
 3. **Company and user keys** are how Schematic identifies entities — use stable IDs from your database
 4. **Track events are non-blocking** — they're buffered and sent in batches (default every 5s)
-5. **Flag checks are cached** by default (5s TTL) — disable cache for real-time needs
-6. **Webhook secrets** are different from API keys — find them in Schematic dashboard under Webhooks
+5. **Webhook secrets** are different from API keys — find them in Schematic dashboard under Webhooks

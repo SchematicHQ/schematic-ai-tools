@@ -74,14 +74,15 @@ app.mount("#app");
 import { Schematic } from "@schematichq/schematic-js";
 
 const schematic = new Schematic("your-publishable-key");
-
-// Always clean up
-window.addEventListener("beforeunload", () => schematic.cleanup());
 ```
 
 ## Identify Users
 
 Call identify after login or when user context changes. This sets the context for all subsequent flag checks.
+
+**Important:** Before using `identify`, you must configure how users and companies are identified in Schematic. See [Key Management](https://docs.schematichq.com/developer_resources/key_management) for details on setting up user and company keys.
+
+**Ask the user:** What keys have you configured in Schematic for identifying users and companies? (e.g., `app_id`, `internal_id`, `stripe_customer_id`, etc.)
 
 ### React
 
@@ -93,9 +94,11 @@ function LoginHandler() {
 
   const onLogin = (user) => {
     identify({
+      // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
       keys: { id: user.id },
       traits: { email: user.email, name: user.name },
       company: {
+        // Use the keys you configured in Schematic for companies
         keys: { id: user.companyId },
         name: user.companyName,
         traits: { plan: user.plan },
@@ -116,9 +119,11 @@ const { identify } = useSchematicEvents();
 
 function onLogin(user) {
   identify({
+    // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     keys: { id: user.id },
     traits: { email: user.email, name: user.name },
     company: {
+      // Use the keys you configured in Schematic for companies
       keys: { id: user.companyId },
       name: user.companyName,
       traits: { plan: user.plan },
@@ -131,9 +136,11 @@ function onLogin(user) {
 
 ```typescript
 schematic.identify({
+  // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
   keys: { id: "user-id" },
   traits: { email: "jane@example.com" },
   company: {
+    // Use the keys you configured in Schematic for companies
     keys: { id: "company-id" },
     name: "Acme Corp",
   },
@@ -284,7 +291,9 @@ const isPending = useSchematicIsPending();
 
 ## WebSocket Mode
 
-For real-time flag updates without polling, enable WebSocket mode:
+WebSocket mode provides real-time flag updates without polling. It maintains a persistent connection and pushes flag changes instantly, with automatic reconnection using exponential backoff.
+
+**React and Vue:** WebSocket mode is **enabled by default**. You can explicitly enable it if needed:
 
 ### React
 
@@ -305,11 +314,11 @@ app.use(SchematicPlugin, {
 
 ### Plain JS
 
+**Highly recommended:** Enable WebSocket mode for real-time updates:
+
 ```typescript
 const schematic = new Schematic("key", { useWebSocket: true });
 ```
-
-WebSocket mode maintains a persistent connection and pushes flag changes instantly. It auto-reconnects with exponential backoff.
 
 ## Advanced Options
 
@@ -373,7 +382,5 @@ new Schematic("key", { flagValueDefaults: { "my-flag": true } });
 
 1. **Use publishable key** — not the secret API key. Publishable keys are safe for client-side code
 2. **Call identify before checking flags** — flags evaluate against the identified user/company context
-3. **Always clean up** — call `cleanup()` (JS) or let the provider handle it (React/Vue)
-4. **Vue refs auto-unwrap in templates** — `useSchematicFlag` returns a `Ref<boolean>`, but Vue templates unwrap it automatically
-5. **Events are buffered** — track events are queued and sent in batches, not immediately
-6. **SSR considerations** — flag checks return defaults during server rendering; hydration picks up real values client-side
+3. **Vue refs auto-unwrap in templates** — `useSchematicFlag` returns a `Ref<boolean>`, but Vue templates unwrap it automatically
+4. **SSR considerations** — flag checks return defaults during server rendering; hydration picks up real values client-side
