@@ -20,7 +20,21 @@ AI coding skills for integrating with [Schematic](https://schematichq.com) SDKs.
 /plugin install schematic-ai-tools
 ```
 
-Once installed, the skills auto-activate when you ask about feature flags, entitlements, tracking, checkout, or other Schematic integration tasks.
+### Configure your API key
+
+The plugin includes the [Schematic MCP server](https://github.com/schematichq/schematic-mcp) for querying and managing your Schematic account directly from Claude. To use it, you'll need a Schematic API key:
+
+1. Sign up or log in at [schematichq.com](https://schematichq.com)
+2. Go to **Settings > API Keys** and create a new key
+3. Set it in your terminal before running Claude Code:
+
+```bash
+export SCHEMATIC_API_KEY="your-api-key"
+```
+
+To avoid setting this every time, add the line above to your shell profile (`~/.zshrc` or `~/.bashrc`), then restart your terminal.
+
+Once configured, the MCP server lets you list flags, check entitlements, manage companies and plans, and more — all from within Claude. The skills also auto-activate when you ask about feature flags, entitlements, tracking, checkout, or other Schematic integration tasks.
 
 ## Install for Cursor
 
@@ -32,14 +46,22 @@ curl -o .cursorrules https://raw.githubusercontent.com/schematichq/schematic-ai-
 
 Or manually copy the `.cursorrules` file from this repo into your project root.
 
-## Runtime Operations
+## Using without the plugin
 
-These skills teach AI assistants how to **write integration code**. For runtime operations like querying your Schematic account data (listing flags, checking company entitlements, viewing plans), use the [Schematic MCP server](https://github.com/schematichq/schematic-mcp).
+If you'd prefer to use the MCP server standalone (without the plugin), you can add it directly:
+
+```bash
+claude mcp add --transport stdio schematic-mcp \
+  --env SCHEMATIC_API_KEY=your-api-key \
+  -- npx -y @schematichq/schematic-mcp
+```
+
+See the [Schematic MCP documentation](https://github.com/schematichq/schematic-mcp) for more details.
 
 ## Links
 
 - [Schematic Docs](https://docs.schematichq.com)
-- [Schematic MCP](https://github.com/schematichq/schematic-mcp) — runtime operations via MCP
+- [Schematic MCP](https://github.com/schematichq/schematic-mcp) ([npm](https://www.npmjs.com/package/@schematichq/schematic-mcp)) — runtime operations via MCP
 - [Node SDK](https://github.com/schematichq/schematic-node)
 - [Python SDK](https://github.com/schematichq/schematic-python)
 - [Go SDK](https://github.com/schematichq/schematic-go)

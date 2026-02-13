@@ -2,5 +2,14 @@
   "name": "schematic-ai-tools",
   "version": "1.0.0",
   "description": "AI coding skills for integrating with Schematic SDKs — feature flags, entitlements, usage tracking, billing components, and more.",
-  "skills_directory": "../skills"
+  "skills_directory": "../skills",
+  "mcpServers": {
+    "schematic-mcp": {
+      "command": "npx",
+      "args": ["-y", "@schematichq/schematic-mcp"],
+      "env": {
+        "SCHEMATIC_API_KEY": ""
+      }
+    }
+  }
 }
