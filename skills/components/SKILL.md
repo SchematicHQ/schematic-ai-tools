@@ -15,10 +15,10 @@ For more information on creating and configuring components in the Schematic das
 ## Installation
 
 ```bash
-npm install @schematichq/schematic-components @stripe/stripe-js
+npm install @schematichq/schematic-components @stripe/stripe-js @stripe/react-stripe-js
 ```
 
-`@stripe/stripe-js` is a required peer dependency for payment processing.
+`@stripe/stripe-js` and `@stripe/react-stripe-js` are required peer dependencies for payment processing.
 
 ## Architecture: Token Exchange
 
@@ -223,7 +223,7 @@ export function BillingPage() {
 
 1. **Temporary tokens are short-lived** — fetch a new one each time the component mounts; don't cache them long-term
 2. **Component IDs come from the Schematic dashboard** — they start with `cmpn_` and reference a pre-configured component
-3. **Stripe peer dependency is required** — `@stripe/stripe-js` must be installed even if you don't use Stripe directly
+3. **Stripe peer dependencies are required** — `@stripe/stripe-js` and `@stripe/react-stripe-js` must be installed even if you don't use Stripe directly
 4. **Token exchange keeps your API key secret** — never expose your Schematic secret API key in frontend code
 5. **Components are React-only** — there is no Vue equivalent; for Vue apps, embed in an iframe or use a React micro-frontend
 6. **The `lookup` object in token generation** identifies which company the token is scoped to — use the same keys you use in identify events
