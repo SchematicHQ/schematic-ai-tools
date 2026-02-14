@@ -179,12 +179,10 @@ await schematic.identify({
   // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
   keys: { id: "user-db-id" },
   name: "Jane Doe",
-  traits: { email: "jane@example.com", role: "admin" },
   company: {
     // Use the keys you configured in Schematic for companies
     keys: { id: "company-db-id" },
     name: "Acme Corp",
-    traits: { plan: "enterprise", industry: "saas" },
   },
 });
 ```
@@ -195,12 +193,10 @@ client.identify(
     # Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     keys={"id": "user-db-id"},
     name="Jane Doe",
-    traits={"email": "jane@example.com", "role": "admin"},
     company={
         # Use the keys you configured in Schematic for companies
         "keys": {"id": "company-db-id"},
         "name": "Acme Corp",
-        "traits": {"plan": "enterprise", "industry": "saas"},
     },
 )
 ```
@@ -211,12 +207,10 @@ schematicClient.Identify(ctx, &schematicgo.EventBodyIdentify{
     // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     Keys:  map[string]string{"id": "user-db-id"},
     Name:  schematicgo.String("Jane Doe"),
-    Traits: map[string]any{"email": "jane@example.com", "role": "admin"},
     Company: &schematicgo.EventBodyIdentifyCompany{
         // Use the keys you configured in Schematic for companies
         Keys:   map[string]string{"id": "company-db-id"},
         Name:   schematicgo.String("Acme Corp"),
-        Traits: map[string]any{"plan": "enterprise"},
     },
 })
 ```
@@ -230,10 +224,8 @@ schematic.identify(
         // Use the keys you configured in Schematic for companies
         .keys(Map.of("id", "company-db-id"))
         .name("Acme Corp")
-        .traits(Map.of("plan", "enterprise"))
         .build(),
-    "Jane Doe",
-    Map.of("email", "jane@example.com", "role", "admin")
+    "Jane Doe"
 );
 ```
 
@@ -246,10 +238,8 @@ schematic.Identify(
         // Use the keys you configured in Schematic for companies
         Keys = new Dictionary<string, string> { { "id", "company-db-id" } },
         Name = "Acme Corp",
-        Traits = new Dictionary<string, object> { { "plan", "enterprise" } },
     },
-    name: "Jane Doe",
-    traits: new Dictionary<string, object> { { "email", "jane@example.com" } }
+    name: "Jane Doe"
 );
 ```
 

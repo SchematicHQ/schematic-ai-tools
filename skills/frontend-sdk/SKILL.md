@@ -96,12 +96,10 @@ function LoginHandler() {
     identify({
       // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
       keys: { id: user.id },
-      traits: { email: user.email, name: user.name },
       company: {
         // Use the keys you configured in Schematic for companies
         keys: { id: user.companyId },
         name: user.companyName,
-        traits: { plan: user.plan },
       },
     });
   };
@@ -121,12 +119,10 @@ function onLogin(user) {
   identify({
     // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
     keys: { id: user.id },
-    traits: { email: user.email, name: user.name },
     company: {
       // Use the keys you configured in Schematic for companies
       keys: { id: user.companyId },
       name: user.companyName,
-      traits: { plan: user.plan },
     },
   });
 }
@@ -138,7 +134,6 @@ function onLogin(user) {
 schematic.identify({
   // Use the keys you configured in Schematic (e.g., "id", "email", etc.)
   keys: { id: "user-id" },
-  traits: { email: "jane@example.com" },
   company: {
     // Use the keys you configured in Schematic for companies
     keys: { id: "company-id" },
@@ -176,12 +171,12 @@ For metered features with usage limits:
 import { useSchematicEntitlement } from "@schematichq/schematic-react";
 
 function UsageDisplay() {
-  const { isEntitled, usage, limit } = useSchematicEntitlement("api-calls");
+  const { value, featureUsage, featureAllocation, featureUsageExceeded } = useSchematicEntitlement("api-calls");
 
   return (
     <div>
-      {isEntitled ? "Active" : "Limit reached"}
-      <span>{usage} / {limit} used</span>
+      {value ? "Active" : "Limit reached"}
+      <span>{featureUsage} / {featureAllocation} used</span>
     </div>
   );
 }
@@ -207,12 +202,12 @@ const isEnabled = useSchematicFlag("feature-flag-key");
 <script setup>
 import { useSchematicEntitlement } from "@schematichq/schematic-vue";
 
-const { isEntitled, usage, limit } = useSchematicEntitlement("api-calls");
+const { value, featureUsage, featureAllocation } = useSchematicEntitlement("api-calls");
 </script>
 
 <template>
   <div>
-    <span>{{ usage }} / {{ limit }} used</span>
+    <span>{{ featureUsage }} / {{ featureAllocation }} used</span>
   </div>
 </template>
 ```
@@ -372,7 +367,7 @@ new Schematic("key", { flagValueDefaults: { "my-flag": true } });
 | Hook / Composable | Returns | Description |
 |---|---|---|
 | `useSchematicFlag(key)` | `boolean` (React) / `Ref<boolean>` (Vue) | Check a single flag |
-| `useSchematicEntitlement(key)` | `{ isEntitled, usage, limit }` | Check entitlement with usage |
+| `useSchematicEntitlement(key)` | `{ value, featureUsage, featureAllocation, featureUsageExceeded, ... }` | Check entitlement with usage |
 | `useSchematicEvents()` | `{ identify, track }` | Send identify/track events |
 | `useSchematicIsPending()` | `boolean` / `Ref<boolean>` | True while initial data loads |
 | `useSchematicContext()` | `{ context, setContext }` | Read/update evaluation context |

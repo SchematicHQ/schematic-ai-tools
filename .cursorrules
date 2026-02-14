@@ -109,8 +109,7 @@ Upsert user/company context. Call on login or profile changes.
 await schematic.identify({
   keys: { id: "user-db-id" },
   name: "Jane Doe",
-  traits: { email: "jane@example.com" },
-  company: { keys: { id: "company-db-id" }, name: "Acme Corp", traits: { plan: "enterprise" } },
+  company: { keys: { id: "company-db-id" }, name: "Acme Corp" },
 });
 ```
 
@@ -118,8 +117,7 @@ await schematic.identify({
 ```python
 client.identify(
     keys={"id": "user-db-id"}, name="Jane Doe",
-    traits={"email": "jane@example.com"},
-    company={"keys": {"id": "company-db-id"}, "name": "Acme Corp", "traits": {"plan": "enterprise"}},
+    company={"keys": {"id": "company-db-id"}, "name": "Acme Corp"},
 )
 ```
 
@@ -128,7 +126,6 @@ client.identify(
 schematicClient.Identify(ctx, &schematicgo.EventBodyIdentify{
     Keys: map[string]string{"id": "user-db-id"},
     Name: schematicgo.String("Jane Doe"),
-    Traits: map[string]any{"email": "jane@example.com"},
     Company: &schematicgo.EventBodyIdentifyCompany{
         Keys: map[string]string{"id": "company-db-id"}, Name: schematicgo.String("Acme Corp"),
     },
@@ -142,10 +139,8 @@ schematic.identify(
     EventBodyIdentifyCompany.builder()
         .keys(Map.of("id", "company-db-id"))
         .name("Acme Corp")
-        .traits(Map.of("plan", "enterprise"))
         .build(),
-    "Jane Doe",
-    Map.of("email", "jane@example.com", "role", "admin")
+    "Jane Doe"
 );
 ```
 
@@ -156,10 +151,8 @@ schematic.Identify(
     company: new EventBodyIdentifyCompany {
         Keys = new Dictionary<string, string> { { "id", "company-db-id" } },
         Name = "Acme Corp",
-        Traits = new Dictionary<string, object> { { "plan", "enterprise" } },
     },
-    name: "Jane Doe",
-    traits: new Dictionary<string, object> { { "email", "jane@example.com" } }
+    name: "Jane Doe"
 );
 ```
 
@@ -321,7 +314,7 @@ Call after login. Sets context for all subsequent flag checks.
 **React:**
 ```tsx
 const { identify } = useSchematicEvents();
-identify({ keys: { id: user.id }, traits: { email: user.email }, company: { keys: { id: user.companyId } } });
+identify({ keys: { id: user.id }, company: { keys: { id: user.companyId } } });
 ```
 
 **Vue:**
@@ -332,7 +325,7 @@ identify({ keys: { id: user.id }, company: { keys: { id: user.companyId } } });
 
 **Plain JS:**
 ```typescript
-schematic.identify({ keys: { id: "user-id" }, traits: { email: "jane@example.com" }, company: { keys: { id: "company-id" } } });
+schematic.identify({ keys: { id: "user-id" }, company: { keys: { id: "company-id" } } });
 ```
 
 ### Check Flags
@@ -347,7 +340,7 @@ const isEnabled = useSchematicFlag("feature-flag-key");
 **React (entitlement with usage):**
 ```tsx
 import { useSchematicEntitlement } from "@schematichq/schematic-react";
-const { isEntitled, usage, limit } = useSchematicEntitlement("api-calls");
+const { value, featureUsage, featureAllocation, featureUsageExceeded } = useSchematicEntitlement("api-calls");
 ```
 
 **Vue:**
@@ -363,7 +356,7 @@ const isEnabled = useSchematicFlag("feature-flag-key");
 ```vue
 <script setup>
 import { useSchematicEntitlement } from "@schematichq/schematic-vue";
-const { isEntitled, usage, limit } = useSchematicEntitlement("api-calls");
+const { value, featureUsage, featureAllocation, featureUsageExceeded } = useSchematicEntitlement("api-calls");
 </script>
 ```
 
@@ -446,7 +439,7 @@ WebSocket mode maintains a persistent connection, pushes flag changes instantly,
 | Hook / Composable | Returns | Description |
 |---|---|---|
 | `useSchematicFlag(key)` | `boolean` (React) / `Ref<boolean>` (Vue) | Check a single flag |
-| `useSchematicEntitlement(key)` | `{ isEntitled, usage, limit }` | Check entitlement with usage |
+| `useSchematicEntitlement(key)` | `{ value, featureUsage, featureAllocation, featureUsageExceeded, ... }` | Check entitlement with usage |
 | `useSchematicEvents()` | `{ identify, track }` | Send identify/track events |
 | `useSchematicIsPending()` | `boolean` / `Ref<boolean>` | True while initial data loads |
 | `useSchematicContext()` | `{ context, setContext }` | Read/update evaluation context |
