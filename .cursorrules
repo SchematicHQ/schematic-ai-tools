@@ -500,7 +500,7 @@ token := resp.Data.Token
 
 **Frontend:**
 ```tsx
-import { SchematicEmbed } from "@schematichq/schematic-components";
+import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
 
 function BillingPage() {
   const [token, setToken] = useState(null);
@@ -508,20 +508,14 @@ function BillingPage() {
     fetch("/schematic-token").then(r => r.json()).then(d => setToken(d.token));
   }, []);
   if (!token) return <div>Loading...</div>;
-  return <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />;
+  return (
+    <EmbedProvider>
+      <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />
+    </EmbedProvider>
+  );
 }
 ```
 
-### EmbedProvider for Multiple Components
-
-```tsx
-import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
-
-<EmbedProvider accessToken={token}>
-  <SchematicEmbed id="cmpn_PRICING_TABLE" />
-  <SchematicEmbed id="cmpn_CUSTOMER_PORTAL" />
-</EmbedProvider>
-```
 
 ### Component Types
 
@@ -534,22 +528,10 @@ Components are configured in the Schematic dashboard. Common types:
 | **payment** | Payment method management |
 | **unsubscribe** | Cancellation flow |
 
-### Custom API Configuration
-
-If using a custom Schematic API endpoint (e.g., proxying through your backend):
-
-```tsx
-<SchematicEmbed
-  accessToken={token}
-  id="cmpn_YOUR_COMPONENT_ID"
-  apiConfig={{ basePath: "https://your-api-proxy.com" }}
-/>
-```
-
 ### Full Example: Billing Page
 
 ```tsx
-import { SchematicEmbed } from "@schematichq/schematic-components";
+import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
 import { useEffect, useState } from "react";
 
 export function BillingPage() {
@@ -576,7 +558,9 @@ export function BillingPage() {
   return (
     <div>
       <h1>Billing</h1>
-      <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />
+      <EmbedProvider>
+        <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />
+      </EmbedProvider>
     </div>
   );
 }

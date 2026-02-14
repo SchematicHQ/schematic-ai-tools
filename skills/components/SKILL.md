@@ -86,12 +86,12 @@ token := resp.Data.Token
 
 ## Frontend: Render Components
 
-### Basic Setup with SchematicEmbed
+### Basic Setup
 
-`SchematicEmbed` renders a component configured in the Schematic dashboard. The `id` is your component ID from Schematic (starts with `cmpn_`).
+`SchematicEmbed` must be wrapped in an `EmbedProvider`. The `accessToken` is passed to `SchematicEmbed`, not the provider. The component `id` is your component ID from Schematic (starts with `cmpn_`).
 
 ```tsx
-import { SchematicEmbed } from "@schematichq/schematic-components";
+import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
 import { useEffect, useState } from "react";
 
 function BillingPage() {
@@ -106,17 +106,16 @@ function BillingPage() {
   if (!token) return <div>Loading...</div>;
 
   return (
-    <SchematicEmbed
-      accessToken={token}
-      id="cmpn_YOUR_COMPONENT_ID"
-    />
+    <EmbedProvider>
+      <SchematicEmbed accessToken={token} id="cmpn_YOUR_COMPONENT_ID" />
+    </EmbedProvider>
   );
 }
 ```
 
-### Using EmbedProvider for Multiple Components
+### Multiple Components
 
-If you have multiple Schematic components on the same page, wrap them in an `EmbedProvider` to share the token:
+You can render multiple `SchematicEmbed` components within a single `EmbedProvider`:
 
 ```tsx
 import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
@@ -133,9 +132,9 @@ function BillingPage() {
   if (!token) return <div>Loading...</div>;
 
   return (
-    <EmbedProvider accessToken={token}>
-      <SchematicEmbed id="cmpn_PRICING_TABLE" />
-      <SchematicEmbed id="cmpn_CUSTOMER_PORTAL" />
+    <EmbedProvider>
+      <SchematicEmbed accessToken={token} id="cmpn_PRICING_TABLE" />
+      <SchematicEmbed accessToken={token} id="cmpn_CUSTOMER_PORTAL" />
     </EmbedProvider>
   );
 }
@@ -147,9 +146,6 @@ function BillingPage() {
 interface EmbedProviderProps {
   accessToken?: string;    // Temporary access token from your backend
   id?: string;             // Component ID (if using a single component)
-  apiConfig?: {            // Optional API config overrides
-    basePath?: string;
-  };
   children?: React.ReactNode;
   mode?: "edit" | "view";  // "view" for production (default), "edit" for dashboard
 }
@@ -166,22 +162,10 @@ Components are configured in the Schematic dashboard. The type is determined by 
 | **payment** | Payment method management |
 | **unsubscribe** | Cancellation flow |
 
-## Custom API Configuration
-
-If you're using a custom Schematic API endpoint (e.g., proxying through your backend):
-
-```tsx
-<SchematicEmbed
-  accessToken={token}
-  id="cmpn_YOUR_COMPONENT_ID"
-  apiConfig={{ basePath: "https://your-api-proxy.com" }}
-/>
-```
-
 ## Full Example: Billing Page
 
 ```tsx
-import { SchematicEmbed } from "@schematichq/schematic-components";
+import { EmbedProvider, SchematicEmbed } from "@schematichq/schematic-components";
 import { useEffect, useState } from "react";
 
 export function BillingPage() {
@@ -210,10 +194,9 @@ export function BillingPage() {
   return (
     <div>
       <h1>Billing</h1>
-      <SchematicEmbed
-        accessToken={token}
-        id="cmpn_YOUR_COMPONENT_ID"
-      />
+      <EmbedProvider accessToken={token}>
+        <SchematicEmbed id="cmpn_YOUR_COMPONENT_ID" />
+      </EmbedProvider>
     </div>
   );
 }
