@@ -13,11 +13,11 @@ AI coding skills for integrating with [Schematic](https://schematichq.com) SDKs.
 ## Install for Claude Code
 
 ```bash
-# Add from marketplace
-/plugin marketplace add schematichq/schematic-ai-tools
+# Add the marketplace
+/plugin marketplace add SchematicHQ/schematic-ai-tooling
 
 # Install the plugin
-/plugin install schematic-ai-tools
+/plugin install schematic-ai-tools@schematic-ai-tools
 ```
 
 ### Configure your API key

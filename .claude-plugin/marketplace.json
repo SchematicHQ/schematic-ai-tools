@@ -1,8 +1,18 @@
 {
   "name": "schematic-ai-tools",
-  "display_name": "Schematic AI Tools",
-  "description": "Skills for writing code that integrates with Schematic — feature flags, entitlements, usage tracking, and billing UI components across Node, Python, Go, Java, C#, React, and Vue.",
-  "repository": "schematichq/schematic-ai-tools",
-  "author": "SchematicHQ",
-  "tags": ["feature-flags", "entitlements", "billing", "sdks", "schematic"]
+  "owner": {
+    "name": "SchematicHQ"
+  },
+  "metadata": {
+    "description": "Skills for writing code that integrates with Schematic — feature flags, entitlements, usage tracking, and billing UI components across Node, Python, Go, Java, C#, React, and Vue."
+  },
+  "plugins": [
+    {
+      "name": "schematic-ai-tools",
+      "source": ".",
+      "description": "AI coding skills for integrating with Schematic SDKs — feature flags, entitlements, usage tracking, billing components, and more.",
+      "version": "1.0.0",
+      "tags": ["feature-flags", "entitlements", "billing", "sdks", "schematic"]
+    }
+  ]
 }
