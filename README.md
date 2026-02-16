@@ -14,7 +14,7 @@ AI coding skills for integrating with [Schematic](https://schematichq.com) SDKs.
 
 ```bash
 # Add the marketplace
-/plugin marketplace add SchematicHQ/schematic-ai-tooling
+/plugin marketplace add SchematicHQ/schematic-ai-tools
 
 # Install the plugin
 /plugin install schematic-ai-tools@schematic-ai-tools
