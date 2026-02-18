@@ -17,7 +17,7 @@ AI coding skills for integrating with [Schematic](https://schematichq.com) SDKs.
 /plugin marketplace add SchematicHQ/schematic-ai-tools
 
 # Install the plugin
-/plugin install schematic-ai-tools@schematic-ai-tools
+/plugin install schematic-ai-tools@schematichq
 ```
 
 ### Configure your API key
@@ -38,7 +38,7 @@ Once configured, the MCP server lets you list flags, check entitlements, manage 
 
 ## Install for Cursor
 
-Copy the `.cursorrules` file to your project root. This file contains condensed integration rules covering backend SDKs (Node, Python, Go, Java, C#), frontend SDKs (React, Vue, JS), and embedded billing components. For detailed examples and comprehensive documentation, see the `skills/` directory.
+Copy the `.cursorrules` file to your project root. This file contains condensed integration rules covering backend SDKs (Node, Python, Go, Java, C#), frontend SDKs (React, Vue, JS), and embedded billing components. For detailed examples and comprehensive documentation, see the `plugins/schematic-ai-tools/skills/` directory.
 
 ```bash
 curl -o .cursorrules https://raw.githubusercontent.com/schematichq/schematic-ai-tools/main/.cursorrules
