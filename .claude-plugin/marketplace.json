@@ -1,5 +1,5 @@
 {
-  "name": "schematic-ai-tools",
+  "name": "schematichq",
   "owner": {
     "name": "SchematicHQ"
   },
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "schematic-ai-tools",
-      "source": ".",
+      "source": "./plugins/schematic-ai-tools",
       "description": "AI coding skills for integrating with Schematic SDKs — feature flags, entitlements, usage tracking, billing components, and more.",
       "version": "1.0.0",
       "tags": ["feature-flags", "entitlements", "billing", "sdks", "schematic"]
