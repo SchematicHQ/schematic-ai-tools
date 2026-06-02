@@ -5,7 +5,7 @@
   "mcpServers": {
     "schematic-mcp": {
       "command": "npx",
-      "args": ["-y", "@schematichq/schematic-mcp"],
+      "args": ["-y", "@schematichq/schematic-mcp@0.3.4"],
       "env": {
         "SCHEMATIC_API_KEY": "${SCHEMATIC_API_KEY}"
       }
